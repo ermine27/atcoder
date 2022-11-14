@@ -1,14 +1,31 @@
+/* last update: 2022-08-03 */
+
 #ifndef DEBUG_PRINT_HPP
 #define DEBUG_PRINT_HPP
 
-#include <algorithm>
-#include <cctype>
-#include <cstddef>
-#include <iostream>
-#include <iterator>
-#include <string_view>
-#include <type_traits>
-#include <utility>
+#define INCLUDED(n) ((defined _GLIBCXX_##n) || (defined _LIBCPP_##n))
+
+#if __cplusplus < 201703L
+#  warning Please use C++17 (or later version).
+#endif
+#if !INCLUDED(ALGORITHM)
+#  warning Please include <algorithm> before including debug_print.hpp.
+#endif
+#if !INCLUDED(CCTYPE)
+#  warning Please include <cctype> before including debug_print.hpp.
+#endif
+#if !INCLUDED(IOSTREAM)
+#  warning Please include <iostream> before including debug_print.hpp.
+#endif
+#if !INCLUDED(ITERATOR)
+#  warning Please include <iterator> before including debug_print.hpp.
+#endif
+#if !INCLUDED(STRING_VIEW)
+#  warning Please include <string_view> before including debug_print.hpp.
+#endif
+#if !INCLUDED(TYPE_TRAITS)
+#  warning Please include <type_traits> before including debug_print.hpp.
+#endif
 
 namespace debug_print {
   std::ostream& os = std::cerr;
@@ -18,15 +35,15 @@ namespace debug_print {
   template <class Tp> auto has_value_type(int) -> decltype(std::declval<typename Tp::value_type>(), std::true_type {});
   template <class Tp> auto has_value_type(...) -> std::false_type;
 
-  template <class Tp>[[maybe_unused]] constexpr bool is_iteratable_container_v = decltype(has_cbegin<Tp>(int {}))::value;
-  template <class Tp>[[maybe_unused]] constexpr bool is_container_v            = decltype(has_value_type<Tp>(int {}))::value
-                                                                                 || is_iteratable_container_v<Tp>;
+  template <class Tp>[[maybe_unused]] constexpr bool is_iterable_container_v = decltype(has_cbegin<Tp>(int {}))::value;
+  template <class Tp>[[maybe_unused]] constexpr bool is_container_v          = decltype(has_value_type<Tp>(int {}))::value
+                                                                               || is_iterable_container_v<Tp>;
 
-  template <>        [[maybe_unused]] constexpr bool is_iteratable_container_v<std::string_view> = false;
-  template <>        [[maybe_unused]] constexpr bool is_container_v<std::string_view>            = false;
-#if (defined _GLIBCXX_STRING) || (defined _LIBCPP_STRING)
-  template <>        [[maybe_unused]] constexpr bool is_iteratable_container_v<std::string>      = false;
-  template <>        [[maybe_unused]] constexpr bool is_container_v<std::string>                 = false;
+  template <>        [[maybe_unused]] constexpr bool is_iterable_container_v<std::string_view> = false;
+  template <>        [[maybe_unused]] constexpr bool is_container_v<std::string_view>          = false;
+#if INCLUDED(STRING)
+  template <>        [[maybe_unused]] constexpr bool is_iterable_container_v<std::string>      = false;
+  template <>        [[maybe_unused]] constexpr bool is_container_v<std::string>               = false;
 #endif
 
   template <class Tp, class... Ts> struct first_element { using type = Tp; };
@@ -49,7 +66,7 @@ namespace debug_print {
   void out(const char*);
   void out(const std::string_view&);
 
-#if (defined _GLIBCXX_STRING) || (defined _LIBCPP_STRING)
+#if INCLUDED(STRING)
   void out(const std::string&);
 #endif
 
@@ -60,21 +77,20 @@ namespace debug_print {
 
   template <class Tp1, class Tp2> void out(const std::pair<Tp1, Tp2>&);
 
-#if (defined _GLIBCXX_TUPLE) || (defined _LIBCPP_TUPLE)
+#if INCLUDED(TUPLE)
   template <class... Ts> void out(const std::tuple<Ts...>&);
 #endif
 
-#if (defined _GLIBCXX_STACK) || (defined _LIBCPP_STACK)
+#if INCLUDED(STACK)
   template <class... Ts> void out(std::stack<Ts...>);
 #endif
 
-#if (defined _GLIBCXX_QUEUE) || (defined _LIBCPP_QUEUE)
+#if INCLUDED(QUEUE)
   template <class... Ts> void out(std::queue<Ts...>);
   template <class... Ts> void out(std::priority_queue<Ts...>);
 #endif
 
-  template <class C>
-  std::enable_if_t<is_iteratable_container_v<C>> out(const C&);
+  template <class C> std::enable_if_t<is_iterable_container_v<C>> out(const C&);
 
   template <class Tp> std::enable_if_t<!is_container_v<Tp>> out(const Tp& arg) {
     os << arg;
@@ -92,7 +108,7 @@ namespace debug_print {
     os << '\"' << arg << '\"';
   }
 
-#if (defined _GLIBCXX_STRING) || (defined _LIBCPP_STRING)
+#if INCLUDED(STRING)
   void out(const std::string& arg) {
     os << '\"' << arg << '\"';
   }
@@ -131,7 +147,7 @@ namespace debug_print {
     os << ')';
   }
 
-#if (defined _GLIBCXX_TUPLE) || (defined _LIBCPP_TUPLE)
+#if INCLUDED(TUPLE)
   template <class T, std::size_t... Is> void print_tuple(const T& arg, std::index_sequence<Is...>) {
     static_cast<void>(((os << (Is == 0 ? "" : ", "), out(std::get<Is>(arg))), ...));
   }
@@ -143,7 +159,7 @@ namespace debug_print {
   }
 #endif
 
-#if (defined _GLIBCXX_STACK) || (defined _LIBCPP_STACK)
+#if INCLUDED(STACK)
   template <class... Ts> void out(std::stack<Ts...> arg) {
     if (arg.empty()) {
       os << "<empty stack>";
@@ -159,7 +175,7 @@ namespace debug_print {
   }
 #endif
 
-#if (defined _GLIBCXX_QUEUE) || (defined _LIBCPP_QUEUE)
+#if INCLUDED(QUEUE)
   template <class... Ts> void out(std::queue<Ts...> arg) {
     if (arg.empty()) {
       os << "<empty queue>";
@@ -189,7 +205,7 @@ namespace debug_print {
 #endif
 
   template <class Container>
-  std::enable_if_t<is_iteratable_container_v<Container>> out(const Container& arg) {
+  std::enable_if_t<is_iterable_container_v<Container>> out(const Container& arg) {
     if (std::distance(std::cbegin(arg), std::cend(arg)) == 0) {
       os << "<empty container>";
       return;
@@ -249,7 +265,7 @@ namespace debug_print {
           comma_pos = i;
           break;
         }
-        if (names[i] == '\"') {
+        if (names[i] == '\"' || names[i] == '\'') {
           if (i > 0 && names[i - 1] == '\\') continue;
           inside_quote ^= true;
         }
@@ -289,4 +305,7 @@ namespace debug_print {
   }
 }  // namespace debug_print
 
+#undef INCLUDED
+
 #endif  // DEBUG_PRINT_HPP
+

@@ -41,7 +41,11 @@ const int dy[] = {0, 1, 0, -1, 1, 1, -1, -1};
 
 #ifdef LOCAL
 #include "../../debug_print.hpp"
-#define dbg(...) cerr << '(' << __LINE__ << ')' << endl; debug_print::multi_print(#__VA_ARGS__, __VA_ARGS__)
+#define dbg(...)                                             \
+    do {                                                     \
+        debug_print::os << '(' << __LINE__ << ")\n";         \
+        debug_print::multi_print(#__VA_ARGS__, __VA_ARGS__); \
+    } while (0)
 #else
 #define dbg(...) (static_cast<void>(0))
 #endif
